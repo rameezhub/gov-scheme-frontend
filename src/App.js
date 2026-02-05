@@ -10,30 +10,29 @@ function ProtectedRoute({ children }) {
 }
 
 /* -------- Login -------- */
-function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const navigate = useNavigate();
+const handleLogin = async (e) => {
+  e.preventDefault();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  try {
     const data = await api("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
+
+    console.log("LOGIN RESPONSE:", data);
+
+    if (!data.token) {
+      throw new Error("No token received");
+    }
+
     localStorage.setItem("token", data.token);
     navigate("/");
-  };
+  } catch (err) {
+    alert("Login failed");
+    console.error(err);
+  }
+};
 
-  return (
-    <form onSubmit={handleLogin}>
-      <h2>Login</h2>
-      <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
-      <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
-      <button>Login</button>
-    </form>
-  );
-}
 
 /* -------- Home -------- */
 function Home() {

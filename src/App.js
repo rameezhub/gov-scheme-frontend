@@ -1,20 +1,73 @@
 import "./App.css";
+import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { api } from "./services/api";
 
-const categories = [
-  { name: "Farmer Welfare", icon: "🚜", color: "orange" },
-  { name: "Education", icon: "🎓", color: "blue" },
-  { name: "RTO Services", icon: "🚗", color: "orange" },
-  { name: "Health Schemes", icon: "❤️", color: "orange" },
-  { name: "Women & Child", icon: "👩‍👧", color: "blue" },
-  { name: "Skill Development", icon: "⚙️", color: "orange" },
-  { name: "Pension Schemes", icon: "👴👵", color: "orange" },
-  { name: "Elderly Schemes", icon: "🧓", color: "blue" }
-];
+/* ---------------- Protected Route ---------------- */
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem("token");
+  return token ? children : <Navigate to="/login" />;
+}
 
-function App() {
+/* ---------------- Login Page ---------------- */
+function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  const login = async (e) => {
+    e.preventDefault();
+    const data = await api("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    localStorage.setItem("token", data.token);
+    navigate("/");
+  };
+
+  return (
+    <form className="login" onSubmit={login}>
+      <h2>Login</h2>
+      <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
+      <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
+      <button>Login</button>
+    </form>
+  );
+}
+
+/* ---------------- Home Page ---------------- */
+function Home() {
+  const [categories, setCategories] = useState([]);
+  const [query, setQuery] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    api("/api/categories").then(setCategories);
+  }, []);
+
+  /* 🎤 Voice Search */
+  const startVoiceSearch = () => {
+  if (!("webkitSpeechRecognition" in window)) {
+    alert("Voice search not supported on this browser");
+    return;
+  }
+
+  const recognition = new window.webkitSpeechRecognition();
+  recognition.lang = "en-IN";
+  recognition.start();
+
+  recognition.onresult = async (e) => {
+    const spokenText = e.results[0][0].transcript;
+    setQuery(spokenText);
+
+    // 🔗 CALL BACKEND with voice text
+    const results = await api(`/api/schemes?search=${spokenText}`);
+    setSchemes(results);
+  };
+};
+
   return (
     <div className="app">
-      {/* Header */}
       <div className="header">
         <h3>Hello, Ruturaj</h3>
         <select>
@@ -23,26 +76,30 @@ function App() {
         </select>
       </div>
 
-      {/* Search */}
       <input
         className="search"
         placeholder="Search schemes, loans, licenses..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
       />
 
-      {/* Categories */}
       <div className="grid">
-        {categories.map((c) => (
-          <div key={c.name} className={`card ${c.color}`}>
-            <div className="icon">{c.icon}</div>
-            <p>{c.name}</p>
-          </div>
-        ))}
+        {categories
+          .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
+          .map((c) => (
+            <div
+              key={c.id}
+              className={`card ${c.color}`}
+              onClick={() => navigate(`/schemes/${c.slug}`)}
+            >
+              <div className="icon">{c.icon}</div>
+              <p>{c.name}</p>
+            </div>
+          ))}
       </div>
 
-      {/* Mic button */}
-      <button className="mic">🎤</button>
+      <button className="mic" onClick={startVoiceSearch}>🎤</button>
 
-      {/* Bottom nav */}
       <div className="bottom-nav">
         <span>🏠 Home</span>
         <span>📄 My Docs</span>
@@ -53,4 +110,52 @@ function App() {
   );
 }
 
-export default App;
+/* ---------------- Scheme List ---------------- */
+function SchemeList({ category }) {
+  const [schemes, setSchemes] = useState([]);
+
+  useEffect(() => {
+    api(`/api/schemes?category=${category}`).then(setSchemes);
+  }, [category]);
+
+  return (
+    <div>
+      <h2>Schemes</h2>
+      {schemes.map((s) => (
+        <div key={s.id}>
+          <h3>{s.name}</h3>
+          <p>{s.description}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------------- App Router ---------------- */
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/schemes/:category"
+          element={
+            <ProtectedRoute>
+              <SchemeList />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  );
+}

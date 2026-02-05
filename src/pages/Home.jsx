@@ -1,29 +1,27 @@
+import { useEffect, useState } from "react";
+import { api } from "../services/api";
 import { useNavigate } from "react-router-dom";
-import "../App.css";
 
-const categories = [ /* same as before */ ];
-
-function Home() {
+export default function Home() {
+  const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
 
-  return (
-    <div className="app">
-      {/* same UI */}
+  useEffect(() => {
+    api("/api/categories").then(setCategories);
+  }, []);
 
-      <div className="grid">
-        {categories.map((c) => (
-          <div
-            key={c.name}
-            className={`card ${c.color}`}
-            onClick={() => navigate(`/schemes/${c.name}`)}
-          >
-            <div className="icon">{c.icon}</div>
-            <p>{c.name}</p>
-          </div>
-        ))}
-      </div>
+  return (
+    <div className="grid">
+      {categories.map((c) => (
+        <div
+          key={c.id}
+          className="card"
+          onClick={() => navigate(`/schemes/${c.slug}`)}
+        >
+          <div className="icon">{c.icon}</div>
+          <p>{c.name}</p>
+        </div>
+      ))}
     </div>
   );
 }
-
-export default Home;

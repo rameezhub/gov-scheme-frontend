@@ -1,35 +1,24 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { api } from "../services/api";
 
-const BASE_URL = "https://gov-scheme-backend-1.onrender.com";
-
-function SchemeList() {
+export default function SchemeList() {
   const { category } = useParams();
-  const navigate = useNavigate();
   const [schemes, setSchemes] = useState([]);
 
   useEffect(() => {
-    fetch(`${BASE_URL}/api/schemes?category=${category}`)
-      .then((res) => res.json())
-      .then(setSchemes);
+    api(`/api/schemes?category=${category}`).then(setSchemes);
   }, [category]);
 
   return (
-    <div className="page">
-      <h2>{category}</h2>
-
+    <div>
+      <h2>Schemes</h2>
       {schemes.map((s) => (
-        <div
-          key={s.id}
-          className="scheme-card"
-          onClick={() => navigate(`/scheme/${s.id}`)}
-        >
-          <h4>{s.name}</h4>
+        <div key={s.id}>
+          <h3>{s.name}</h3>
           <p>{s.description}</p>
         </div>
       ))}
     </div>
   );
 }
-
-export default SchemeList;

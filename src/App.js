@@ -9,30 +9,56 @@ function ProtectedRoute({ children }) {
   return token ? children : <Navigate to="/login" />;
 }
 
-/* -------- Login -------- */
-const handleLogin = async (e) => {
-  e.preventDefault();
+/* -------- Login Component (FIXED) -------- */
+function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  try {
-    const data = await api("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
+  const handleLogin = async (e) => {
+    e.preventDefault();
 
-    console.log("LOGIN RESPONSE:", data);
+    try {
+      const data = await api("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (!data.token) {
-      throw new Error("No token received");
+      console.log("LOGIN RESPONSE:", data);
+
+      if (!data.token) {
+        throw new Error("No token received");
+      }
+
+      localStorage.setItem("token", data.token);
+      navigate("/");
+    } catch (err) {
+      alert("Login failed");
+      console.error(err);
     }
+  };
 
-    localStorage.setItem("token", data.token);
-    navigate("/");
-  } catch (err) {
-    alert("Login failed");
-    console.error(err);
-  }
-};
+  return (
+    <form onSubmit={handleLogin}>
+      <h2>Login</h2>
 
+      <input
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
+      <button type="submit">Login</button>
+    </form>
+  );
+}
 
 /* -------- Home -------- */
 function Home() {
@@ -74,11 +100,12 @@ function SchemeList() {
   );
 }
 
-/* -------- APP (DEFAULT EXPORT — THIS IS THE KEY) -------- */
-function App() {
+/* -------- App (DEFAULT EXPORT) -------- */
+export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+
       <Route
         path="/"
         element={
@@ -87,6 +114,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/schemes/:category"
         element={
@@ -98,5 +126,3 @@ function App() {
     </Routes>
   );
 }
-
-export default App;

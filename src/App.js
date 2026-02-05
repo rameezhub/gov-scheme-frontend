@@ -4,10 +4,41 @@ function Home() {
   const [schemes, setSchemes] = useState([]);
   const navigate = useNavigate();
 
+  // Load categories / initial schemes
   useEffect(() => {
-    api("/api/schemes").then(setCategories);
+    async function load() {
+      try {
+        const data = await api("/api/schemes"); // temp: schemes as categories
+        setCategories(data);
+      } catch (err) {
+        console.error("Failed to load categories", err);
+      }
+    }
+    load();
   }, []);
 
+  // Text search → backend
+  useEffect(() => {
+    if (!query) {
+      setSchemes([]);
+      return;
+    }
+
+    const delay = setTimeout(async () => {
+      try {
+        const results = await api(
+          `/api/schemes?search=${encodeURIComponent(query)}`
+        );
+        setSchemes(results);
+      } catch (err) {
+        console.error("Search failed", err);
+      }
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [query]);
+
+  // 🎤 Voice search → backend
   const startVoiceSearch = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -24,13 +55,10 @@ function Home() {
     recognition.onresult = async (e) => {
       const spokenText = e.results[0][0].transcript;
       setQuery(spokenText);
-
-      const results = await api(
-        `/api/schemes?search=${encodeURIComponent(spokenText)}`
-      );
-      setSchemes(results);
     };
   };
+
+  const list = schemes.length ? schemes : categories;
 
   return (
     <div className="app">
@@ -46,11 +74,13 @@ function Home() {
       />
 
       <div className="grid">
-        {(schemes.length ? schemes : categories).map((item) => (
+        {list.map((item) => (
           <div
-            key={item.id || item.name}
+            key={item.id}
             className="card orange"
-            onClick={() => navigate(`/schemes/${item.name}`)}
+            onClick={() =>
+              navigate(`/schemes/${encodeURIComponent(item.name)}`)
+            }
           >
             <div className="icon">{item.icon || "📄"}</div>
             <p>{item.name}</p>

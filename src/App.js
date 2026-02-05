@@ -1,6 +1,13 @@
 import "./App.css";
 import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import { api } from "./services/api";
 
 /* ---------------- Protected Route ---------------- */
@@ -9,7 +16,7 @@ function ProtectedRoute({ children }) {
   return token ? children : <Navigate to="/login" />;
 }
 
-/* ---------------- Login Page ---------------- */
+/* ---------------- Login ---------------- */
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,89 +36,82 @@ function Login() {
     <form className="login" onSubmit={login}>
       <h2>Login</h2>
       <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
-      <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
+      <input
+        type="password"
+        placeholder="Password"
+        onChange={(e) => setPassword(e.target.value)}
+      />
       <button>Login</button>
     </form>
   );
 }
 
-/* ---------------- Home Page ---------------- */
+/* ---------------- Home (FIXED) ---------------- */
 function Home() {
   const [categories, setCategories] = useState([]);
   const [query, setQuery] = useState("");
+  const [schemes, setSchemes] = useState([]); // ✅ THIS WAS MISSING
   const navigate = useNavigate();
 
   useEffect(() => {
     api("/api/categories").then(setCategories);
   }, []);
 
-  /* 🎤 Voice Search */
+  /* 🎤 Voice Search → Backend */
   const startVoiceSearch = () => {
-  if (!("webkitSpeechRecognition" in window)) {
-    alert("Voice search not supported on this browser");
-    return;
-  }
+    const recognition = new window.webkitSpeechRecognition();
+    recognition.lang = "en-IN";
+    recognition.start();
 
-  const recognition = new window.webkitSpeechRecognition();
-  recognition.lang = "en-IN";
-  recognition.start();
+    recognition.onresult = async (e) => {
+      const spokenText = e.results[0][0].transcript;
+      setQuery(spokenText);
 
-  recognition.onresult = async (e) => {
-    const spokenText = e.results[0][0].transcript;
-    setQuery(spokenText);
-
-    // 🔗 CALL BACKEND with voice text
-    const results = await api(`/api/schemes?search=${spokenText}`);
-    setSchemes(results);
+      const results = await api(
+        `/api/schemes?search=${encodeURIComponent(spokenText)}`
+      );
+      setSchemes(results); // ✅ NOW DEFINED
+    };
   };
-};
 
   return (
     <div className="app">
       <div className="header">
         <h3>Hello, Ruturaj</h3>
-        <select>
-          <option>English</option>
-          <option>Hindi</option>
-        </select>
       </div>
 
       <input
         className="search"
-        placeholder="Search schemes, loans, licenses..."
+        placeholder="Search schemes..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
 
       <div className="grid">
-        {categories
-          .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
-          .map((c) => (
-            <div
-              key={c.id}
-              className={`card ${c.color}`}
-              onClick={() => navigate(`/schemes/${c.slug}`)}
-            >
-              <div className="icon">{c.icon}</div>
-              <p>{c.name}</p>
-            </div>
-          ))}
+        {(schemes.length ? schemes : categories).map((item) => (
+          <div
+            key={item.id}
+            className="card orange"
+            onClick={() =>
+              item.slug && navigate(`/schemes/${item.slug}`)
+            }
+          >
+            <div className="icon">{item.icon || "📄"}</div>
+            <p>{item.name}</p>
+          </div>
+        ))}
       </div>
 
-      <button className="mic" onClick={startVoiceSearch}>🎤</button>
-
-      <div className="bottom-nav">
-        <span>🏠 Home</span>
-        <span>📄 My Docs</span>
-        <span>📍 Map</span>
-        <span>❓ Help</span>
-      </div>
+      <button className="mic" onClick={startVoiceSearch}>
+        🎤
+      </button>
     </div>
   );
 }
 
 /* ---------------- Scheme List ---------------- */
-function SchemeList({ category }) {
+function SchemeList() {
+  const { category } = useParams();
   const [schemes, setSchemes] = useState([]);
 
   useEffect(() => {

@@ -7,7 +7,7 @@ const SCHEME_DATA = {
       id: 1,
       name: "PM Kisan Samman Nidhi",
       description: "₹6000 yearly income support for farmers",
-      benefits: "₹2000 paid every 4 months",
+      benefits: "₹2000 every 4 months",
       eligibility: "Small & marginal farmers",
     },
     {
@@ -45,3 +45,4 @@ export default function SchemeDetail() {
     </div>
   );
 }
+

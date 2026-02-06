@@ -1,32 +1,47 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import "./SchemeDetail.css";
 
-const BASE_URL = "https://gov-scheme-backend-1.onrender.com";
+const SCHEME_DATA = {
+  farmer: [
+    {
+      id: 1,
+      name: "PM Kisan Samman Nidhi",
+      description: "₹6000 yearly income support for farmers",
+      benefits: "₹2000 paid every 4 months",
+      eligibility: "Small & marginal farmers",
+    },
+    {
+      id: 2,
+      name: "Crop Insurance Scheme",
+      description: "Insurance against crop loss",
+      benefits: "Low premium insurance",
+      eligibility: "All registered farmers",
+    },
+  ],
+};
 
-function SchemeDetails() {
-  const { id } = useParams();
-  const [scheme, setScheme] = useState(null);
+export default function SchemeDetail() {
+  const { category, id } = useParams();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetch(`${BASE_URL}/api/schemes/${id}`)
-      .then((res) => res.json())
-      .then(setScheme);
-  }, [id]);
+  const scheme = SCHEME_DATA[category]?.find(
+    (s) => s.id === Number(id)
+  );
 
-  if (!scheme) return <p>Loading...</p>;
+  if (!scheme) {
+    return <p>Scheme not found</p>;
+  }
 
   return (
-    <div className="page">
+    <div className="detail">
+      <button onClick={() => navigate(-1)}>⬅ Back</button>
+
       <h2>{scheme.name}</h2>
-      <p>{scheme.description}</p>
+      <p><strong>Description:</strong> {scheme.description}</p>
+      <p><strong>Benefits:</strong> {scheme.benefits}</p>
+      <p><strong>Eligibility:</strong> {scheme.eligibility}</p>
 
-      <h4>Benefits</h4>
-      <p>{scheme.benefits}</p>
-
-      <h4>Documents Required</h4>
-      <p>{scheme.documentsRequired}</p>
+      <button className="apply">Apply Now</button>
     </div>
   );
 }
-
-export default SchemeDetails;

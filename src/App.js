@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "./App.css";
 import { api } from "./services/api";
@@ -29,7 +29,7 @@ function Home() {
 export default function App() {
   return (
     <Routes>
-      {/* ANY route goes to Home */}
+      {/* Any route → Home */}
       <Route path="*" element={<Home />} />
     </Routes>
   );

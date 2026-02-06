@@ -1,0 +1,72 @@
+.home {
+  max-width: 420px;
+  margin: auto;
+  padding: 16px;
+  background: #f4f6f8;
+  min-height: 100vh;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  margin: 12px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.card {
+  background: #ff7a18;
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.card:nth-child(even) {
+  background: #1e3a8a;
+}
+
+.icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.mic {
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  background: orange;
+  border: none;
+  border-radius: 50%;
+  font-size: 24px;
+  padding: 16px;
+}
+
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+}
+
+footer .active {
+  color: orange;
+  font-weight: bold;
+}

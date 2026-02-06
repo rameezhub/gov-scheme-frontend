@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "./services/api";
 import "./Home.css";
 
 export default function Home() {
   const [categories, setCategories] = useState([]);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  /* ---------------- Static Categories ---------------- */
   useEffect(() => {
-    // TEMP categories (later from backend)
     setCategories([
       { name: "Farmer Welfare", slug: "farmer", icon: "🚜" },
       { name: "Education", slug: "education", icon: "🎓" },
@@ -23,25 +23,57 @@ export default function Home() {
     ]);
   }, []);
 
+  /* ---------------- Search (backend-safe) ---------------- */
   const search = async (text) => {
     setQuery(text);
-    const data = await api(`/api/schemes?search=${encodeURIComponent(text)}`);
-    setResults(data);
+
+    if (!text.trim()) {
+      setResults([]);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await fetch(
+        `https://gov-scheme-backend-1.onrender.com/api/schemes?search=${encodeURIComponent(
+          text
+        )}`
+      );
+
+      const data = await res.json();
+      setResults(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Search failed:", err);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  /* ---------------- Voice Search ---------------- */
   const startVoice = () => {
     const Speech =
       window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Speech) return alert("Voice not supported");
+
+    if (!Speech) {
+      alert("Voice search not supported in this browser");
+      return;
+    }
 
     const rec = new Speech();
     rec.lang = "en-IN";
     rec.start();
-    rec.onresult = (e) => search(e.results[0][0].transcript);
+
+    rec.onresult = (e) => {
+      const text = e.results[0][0].transcript;
+      search(text);
+    };
   };
 
   return (
     <div className="home">
+      {/* Header */}
       <header>
         <h3>Hello, Ruturaj</h3>
         <select>
@@ -49,6 +81,7 @@ export default function Home() {
         </select>
       </header>
 
+      {/* Search */}
       <input
         className="search"
         placeholder="Search schemes, loans, licenses..."
@@ -56,13 +89,17 @@ export default function Home() {
         onChange={(e) => search(e.target.value)}
       />
 
+      {/* Loading */}
+      {loading && <p className="loading">Searching...</p>}
+
+      {/* Grid */}
       <div className="grid">
-        {(results.length ? results : categories).map((item) => (
+        {(results.length > 0 ? results : categories).map((item, index) => (
           <div
-            key={item.name}
+            key={index}
             className="card"
             onClick={() =>
-              item.slug && navigate(`/category/${item.slug}`)
+              item.slug ? navigate(`/category/${item.slug}`) : null
             }
           >
             <div className="icon">{item.icon || "📄"}</div>
@@ -71,8 +108,17 @@ export default function Home() {
         ))}
       </div>
 
-      <button className="mic" onClick={startVoice}>🎤</button>
+      {/* Empty State */}
+      {query && !loading && results.length === 0 && (
+        <p className="empty">No schemes found</p>
+      )}
 
+      {/* Voice Button */}
+      <button className="mic" onClick={startVoice}>
+        🎤
+      </button>
+
+      {/* Footer */}
       <footer>
         <span className="active">🏠 Home</span>
         <span>📄 My Docs</span>

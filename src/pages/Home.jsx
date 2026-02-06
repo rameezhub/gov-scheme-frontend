@@ -10,10 +10,11 @@ export default function Home() {
   const [language, setLanguage] = useState("en");
   const navigate = useNavigate();
 
-  /* ---------------- Farmer Schemes (Local with ID) ---------------- */
+  /* ---------------- Farmer Schemes (LOCAL + ID) ---------------- */
   const farmerSchemes = [
     {
       id: 1,
+      slug: "farmer",
       name:
         language === "hi"
           ? "प्रधानमंत्री किसान सम्मान निधि"
@@ -26,6 +27,7 @@ export default function Home() {
     },
     {
       id: 2,
+      slug: "farmer",
       name:
         language === "hi"
           ? "प्रधानमंत्री फसल बीमा योजना"
@@ -41,50 +43,18 @@ export default function Home() {
   /* ---------------- Categories (EN / HI) ---------------- */
   useEffect(() => {
     setCategories([
-      {
-        name: language === "hi" ? "किसान कल्याण" : "Farmer Welfare",
-        slug: "farmer",
-        icon: "🚜",
-      },
-      {
-        name: language === "hi" ? "शिक्षा" : "Education",
-        slug: "education",
-        icon: "🎓",
-      },
-      {
-        name: language === "hi" ? "आरटीओ सेवाएं" : "RTO Services",
-        slug: "rto",
-        icon: "🚗",
-      },
-      {
-        name: language === "hi" ? "स्वास्थ्य योजनाएं" : "Health Schemes",
-        slug: "health",
-        icon: "❤️",
-      },
-      {
-        name: language === "hi" ? "महिला एवं बाल" : "Women & Child",
-        slug: "women",
-        icon: "👩‍👧",
-      },
-      {
-        name: language === "hi" ? "कौशल विकास" : "Skill Development",
-        slug: "skill",
-        icon: "⚙️",
-      },
-      {
-        name: language === "hi" ? "पेंशन योजनाएं" : "Pension Schemes",
-        slug: "pension",
-        icon: "👴👵",
-      },
-      {
-        name: language === "hi" ? "वरिष्ठ नागरिक" : "Elderly Schemes",
-        slug: "elderly",
-        icon: "🧓",
-      },
+      { name: language === "hi" ? "किसान कल्याण" : "Farmer Welfare", slug: "farmer", icon: "🚜" },
+      { name: language === "hi" ? "शिक्षा" : "Education", slug: "education", icon: "🎓" },
+      { name: language === "hi" ? "आरटीओ सेवाएं" : "RTO Services", slug: "rto", icon: "🚗" },
+      { name: language === "hi" ? "स्वास्थ्य योजनाएं" : "Health Schemes", slug: "health", icon: "❤️" },
+      { name: language === "hi" ? "महिला एवं बाल" : "Women & Child", slug: "women", icon: "👩‍👧" },
+      { name: language === "hi" ? "कौशल विकास" : "Skill Development", slug: "skill", icon: "⚙️" },
+      { name: language === "hi" ? "पेंशन योजनाएं" : "Pension Schemes", slug: "pension", icon: "👴👵" },
+      { name: language === "hi" ? "वरिष्ठ नागरिक" : "Elderly Schemes", slug: "elderly", icon: "🧓" },
     ]);
   }, [language]);
 
-  /* ---------------- Search (Backend-safe) ---------------- */
+  /* ---------------- Search (Backend safe) ---------------- */
   const search = async (text) => {
     setQuery(text);
 
@@ -102,46 +72,51 @@ export default function Home() {
       );
       const data = await res.json();
       setResults(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Search failed:", err);
+    } catch {
       setResults([]);
     } finally {
       setLoading(false);
     }
   };
 
-  /* ---------------- Voice Search (EN / HI) ---------------- */
+  /* ---------------- Voice Search ---------------- */
   const startVoice = () => {
-    const Speech =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!Speech) {
-      alert("Voice search not supported");
-      return;
-    }
+    const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Speech) return alert("Voice search not supported");
 
     const rec = new Speech();
     rec.lang = language === "hi" ? "hi-IN" : "en-IN";
     rec.start();
 
-    rec.onresult = (e) => {
-      const text = e.results[0][0].transcript;
-      search(text);
-    };
+    rec.onresult = (e) => search(e.results[0][0].transcript);
+  };
+
+  /* ---------------- Click Handler (🔥 FIXED) ---------------- */
+  const handleCardClick = (item) => {
+    // Farmer category → show farmer schemes
+    if (item.slug === "farmer" && !item.id) {
+      setResults(farmerSchemes);
+      return;
+    }
+
+    // Farmer scheme → detail page
+    if (item.slug === "farmer" && item.id) {
+      navigate(`/scheme/farmer/${item.id}`);
+      return;
+    }
+
+    // Other categories
+    if (item.slug) {
+      navigate(`/category/${item.slug}`);
+    }
   };
 
   return (
     <div className="home">
       {/* Header */}
       <header>
-        <h3>
-          {language === "hi" ? "नमस्ते, रुतुराज" : "Hello, Ruturaj"}
-        </h3>
-
-        <select
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-        >
+        <h3>{language === "hi" ? "नमस्ते, रुतुराज" : "Hello, Ruturaj"}</h3>
+        <select value={language} onChange={(e) => setLanguage(e.target.value)}>
           <option value="en">English</option>
           <option value="hi">हिन्दी</option>
         </select>
@@ -159,33 +134,15 @@ export default function Home() {
         onChange={(e) => search(e.target.value)}
       />
 
-      {/* Loading */}
-      {loading && (
-        <p className="loading">
-          {language === "hi" ? "खोज जारी है..." : "Searching..."}
-        </p>
-      )}
+      {loading && <p className="loading">{language === "hi" ? "खोज जारी है..." : "Searching..."}</p>}
 
       {/* Grid */}
       <div className="grid">
-        {(results.length > 0 ? results : categories).map((item) => (
+        {(results.length ? results : categories).map((item) => (
           <div
-            key={item.id || item.slug}
+            key={`${item.slug}-${item.id || "cat"}`}
             className="card"
-            onClick={() => {
-              // Category click
-              if (item.slug === "farmer") {
-                setResults(farmerSchemes);
-              }
-              // Farmer scheme detail
-              else if (item.id) {
-                navigate(`/scheme/farmer/${item.id}`);
-              }
-              // Other categories
-              else if (item.slug) {
-                navigate(`/category/${item.slug}`);
-              }
-            }}
+            onClick={() => handleCardClick(item)}
           >
             <div className="icon">{item.icon || "📄"}</div>
             <p>{item.name}</p>
@@ -196,23 +153,15 @@ export default function Home() {
 
       {/* Empty */}
       {query && !loading && results.length === 0 && (
-        <p className="empty">
-          {language === "hi"
-            ? "कोई योजना नहीं मिली"
-            : "No schemes found"}
-        </p>
+        <p className="empty">{language === "hi" ? "कोई योजना नहीं मिली" : "No schemes found"}</p>
       )}
 
-      {/* Voice Button */}
-      <button className="mic" onClick={startVoice}>
-        🎤
-      </button>
+      {/* Voice */}
+      <button className="mic" onClick={startVoice}>🎤</button>
 
       {/* Footer */}
       <footer>
-        <span className="active">
-          🏠 {language === "hi" ? "होम" : "Home"}
-        </span>
+        <span className="active">🏠 {language === "hi" ? "होम" : "Home"}</span>
         <span>📄 {language === "hi" ? "मेरे दस्तावेज़" : "My Docs"}</span>
         <span>📍 {language === "hi" ? "मानचित्र" : "Map"}</span>
         <span>❓ {language === "hi" ? "सहायता" : "Help"}</span>

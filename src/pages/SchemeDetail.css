@@ -1,0 +1,31 @@
+.detail {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.detail h2 {
+  margin-bottom: 10px;
+}
+
+.detail p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.detail button {
+  margin-top: 15px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.detail .apply {
+  background-color: #ff7a00;
+  color: white;
+  font-weight: bold;
+}
